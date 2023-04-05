@@ -2,9 +2,12 @@
 using System.IO;
 using System.Net.Sockets;
 using System.Net;
+using System.Runtime.Serialization.Formatters.Binary;
+using SharedData;
 
 namespace tcp_client
 {
+
     class Program
     {
         static int port = 8080; 
@@ -12,26 +15,26 @@ namespace tcp_client
         static void Main(string[] args)
         {
             IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(address), port);
-
             TcpClient client = new TcpClient();
 
-            client.Connect(ipPoint);
-
-            string message = "";
+            client.Connect(ipPoint);         
             try
             {
-                while (message != "end")
+                Request request = new Request();
+                do
                 {
-                    Console.Write("Enter a message:");
-                    message = Console.ReadLine();
+                    Console.Write("Enter A:");
+                    request.A = double.Parse(Console.ReadLine());
+                    Console.Write("Enter B:");
+                    request.B = double.Parse(Console.ReadLine());
+                    Console.Write("Enter Operation [1-4]:");
+                    request.Operation = (OperationType)Enum.Parse(typeof(OperationType), Console.ReadLine());
 
                     NetworkStream ns = client.GetStream();
 
-                    StreamWriter sw = new StreamWriter(ns);
-                    sw.WriteLine(message);//Hello
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    formatter.Serialize(ns, request);
 
-
-                    sw.Flush(); // send all buffered data and clear the buffer // 1Kb
 
                     StreamReader sr = new StreamReader(ns);
                     string response = sr.ReadLine();
@@ -42,7 +45,7 @@ namespace tcp_client
                     //sw.Close();
                     //sr.Close();
                     //ns.Close();
-                }
+                } while (request.A != 0 && request.B != 0);
             }
             catch (Exception ex)
             {
